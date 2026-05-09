@@ -39,14 +39,15 @@
     // ← Replace with your NEW ImgBB API key after revoking the old one at imgbb.com
     imgKey: (typeof process !== 'undefined' && process.env && process.env.IMGBB_KEY)
       ? process.env.IMGBB_KEY
-      : 'c4d9f0a3675c5628ef134a1648b00596',
-  };
+      : '7416acef89ebb625100b3bf7a580770a',
 
-     adminPassword: (typeof process !== 'undefined' && process.env && process.env.ADMIN_PASSWORD)
+    // ← Admin panel password. Change this to something strong.
+    // NOTE: This is client-side only — visible in source. Use Firebase Auth in production.
+    adminPassword: (typeof process !== 'undefined' && process.env && process.env.ADMIN_PASSWORD)
       ? process.env.ADMIN_PASSWORD
       : '00000000',
   };
-  
+
   if (typeof console !== 'undefined') {
     if (_cfg.dbUrl.startsWith('REPLACE')) {
       console.warn('[GeoGensan] Firebase DB URL not configured. Rotate your key first — see config.js.');
