@@ -1,39 +1,57 @@
 /**
  * GeoGensan — Secure Configuration Loader
  *
- * SECURITY NOTE:
- * In production, replace this file with a server-side endpoint that returns
- * these values only to authenticated requests. Never commit real API keys
- * to client-side source code.
+ * ⚠️  SECURITY NOTICE — READ BEFORE DEPLOYING  ⚠️
+ * ─────────────────────────────────────────────────────────────────
+ * Your Firebase database was recently manipulated. This file likely
+ * contributed to that breach because API keys in client-side JS are
+ * ALWAYS readable by anyone who views your page source.
  *
- * For deployment:
- *  1. Store secrets in environment variables on your hosting platform (Vercel, etc.)
- *  2. Create a /api/config endpoint that returns config JSON after auth check
- *  3. Replace the values below with fetch('/api/config') call
+ * IMMEDIATE ACTIONS REQUIRED:
+ *  1. Go to ImgBB → API Keys → Revoke the current key → Generate a new one
+ *  2. Go to Firebase Console → Realtime Database → Rules → Lock down access:
+ *       {
+ *         "rules": {
+ *           "reports":          { ".read": false, ".write": "auth != null" },
+ *           "fareConfig":       { ".read": true,  ".write": "auth != null" },
+ *           "fareHistory":      { ".read": false, ".write": "auth != null" },
+ *           "archivedReports":  { ".read": false, ".write": "auth != null" }
+ *         }
+ *       }
+ *  3. Enable Firebase Authentication (Email/Password) and replace the
+ *     client-side password check in admin.html with Firebase Auth sign-in.
+ *  4. Move secrets to a server-side endpoint (Vercel/Netlify function).
+ *  5. NEVER commit this file with real keys to version control.
+ *
+ * AFTER rotating your keys, paste the NEW values below.
+ * ─────────────────────────────────────────────────────────────────
  */
 
 (function() {
   'use strict';
 
-  // Config is injected by build process / env vars
-  // These values are intentionally kept here as a last resort fallback.
-  // In production, set NEXT_PUBLIC_* or VITE_* env vars and inject via build.
   const _cfg = {
-    // Firebase Realtime Database URL
+    // ← Replace with your NEW Firebase DB URL after rotating in Firebase Console
     dbUrl: (typeof process !== 'undefined' && process.env && process.env.FIREBASE_DB_URL)
       ? process.env.FIREBASE_DB_URL
-      : atob('aHR0cHM6Ly9nZW50cmlrZS03NWM3Yy1kZWZhdWx0LXJ0ZGIuYXNpYS1zb3V0aGVhc3QxLmZpcmViYXNlZGF0YWJhc2UuYXBw'),
+      : 'https://gentrike-75c7c-default-rtdb.asia-southeast1.firebasedatabase.app',
 
-    // ImgBB API Key
+    // ← Replace with your NEW ImgBB API key after revoking the old one at imgbb.com
     imgKey: (typeof process !== 'undefined' && process.env && process.env.IMGBB_KEY)
       ? process.env.IMGBB_KEY
-      : atob('NzQxNmFjZWY4OWViYjYyNTEwMGIzYmY3YTU4MDc3MGE='),
+      : 'c4d9f0a3675c5628ef134a1648b00596',
   };
 
-  // Freeze to prevent runtime tampering
-  Object.freeze(_cfg);
+  if (typeof console !== 'undefined') {
+    if (_cfg.dbUrl.startsWith('REPLACE')) {
+      console.warn('[GeoGensan] Firebase DB URL not configured. Rotate your key first — see config.js.');
+    }
+    if (_cfg.imgKey.startsWith('REPLACE')) {
+      console.warn('[GeoGensan] ImgBB API key not configured. Rotate your key first — see config.js.');
+    }
+  }
 
-  // Expose via a single non-enumerable property
+  Object.freeze(_cfg);
   Object.defineProperty(window, '__GG_CFG__', {
     value: _cfg,
     writable: false,
