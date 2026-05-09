@@ -42,6 +42,11 @@
       : 'c4d9f0a3675c5628ef134a1648b00596',
   };
 
+     adminPassword: (typeof process !== 'undefined' && process.env && process.env.ADMIN_PASSWORD)
+      ? process.env.ADMIN_PASSWORD
+      : '00000000',
+  };
+  
   if (typeof console !== 'undefined') {
     if (_cfg.dbUrl.startsWith('REPLACE')) {
       console.warn('[GeoGensan] Firebase DB URL not configured. Rotate your key first — see config.js.');
