@@ -2,7 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self' https:; script-src 'self' 'unsafe-inline' https://fonts.googleapis.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:; font-src 'self' https://fonts.gstatic.com;">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' data: blob:; connect-src 'self'; font-src 'self' https://fonts.gstatic.com; frame-ancestors 'none'; base-uri 'self';">
+  <meta http-equiv="X-Frame-Options" content="DENY">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>GeoGensan — Navigate GenSan Smarter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -119,7 +122,7 @@
     .feature-card::after { content:''; position:absolute; top:0; left:0; right:0; height:3px; background:var(--card-top,var(--blue)); border-radius:20px 20px 0 0; opacity:0; transition:opacity 0.3s; }
     .feature-card:hover { background:white; border-color:var(--blue-mid); box-shadow:var(--shadow-md); transform:translateY(-4px); }
     .feature-card:hover::after { opacity:1; }
-    .feature-icon-wrap { width:50px; height:50px; border-radius:14px; background:var(--icon-bg,var(--blue-light)); display:flex; align-items:center; justify-content:center; font-size:22px; margin-bottom:18px; }
+    .feature-icon-wrap { display: none; }
     .feature-card-title { font-size:17px; font-weight:700; color:var(--gray-900); margin-bottom:8px; letter-spacing:-0.2px; }
     .feature-card-desc { font-size:13px; color:var(--gray-600); line-height:1.65; }
     .feature-tag { display:inline-block; margin-top:16px; padding:3px 12px; background:var(--tag-bg,var(--blue-light)); color:var(--tag-color,var(--blue)); border-radius:50px; font-size:11px; font-weight:700; letter-spacing:0.04em; }
@@ -304,10 +307,9 @@
         <div class="reveal-r">
           <div class="intro-img-wrap">
             <img
-              src="https://images.unsplash.com/photo-1530789253388-582c481c54b0?w=800&auto=format&fit=crop&q=80"
+              src="intro.png"
               alt="Busy city street with tricycles"
               loading="lazy"
-              onerror="this.src='https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=800&auto=format&fit=crop&q=80'"
             >
             <div class="intro-img-badge">
               <span class="intro-img-badge-icon"></span>
@@ -348,7 +350,7 @@
           <span class="feature-tag">OSRM-Powered</span>
         </div>
         <div class="feature-card fc-sky reveal">
-          <div class="feature-icon-wrap">⏱</div>
+          <div class="feature-icon-wrap"></div>
           <div class="feature-card-title">Estimated Time of Arrival</div>
           <div class="feature-card-desc">Calculates realistic ETA for trike and bus/jeep modes based on distance and road type within GenSan.</div>
           <span class="feature-tag">Mode-Aware</span>
@@ -390,10 +392,9 @@
   <!-- CITY PHOTO BANNER -->
   <div class="city-banner">
     <img
-      src="https://images.unsplash.com/photo-1599631498169-24fef5a91ee6?w=1400&auto=format&fit=crop&q=80"
-      alt="Philippines city street daytime"
+      src="city.png"
+      alt="General Santos City"
       loading="lazy"
-      onerror="this.src='https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?w=1400&auto=format&fit=crop&q=80'"
     >
     <div class="city-banner-overlay">
       <div class="city-banner-text">
@@ -435,7 +436,7 @@
         <div class="steps-visual">
           <div class="steps-img-frame">
             <img id="stepImg"
-              src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&auto=format&fit=crop&q=80"
+              src="step1.png"
               alt="Navigation map visual"
               loading="lazy"
             >
@@ -494,9 +495,7 @@
 
   <!-- CTA -->
   <section class="cta-section">
-    <div class="cta-bg-img">
-      <img src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=1400&auto=format&fit=crop&q=80" alt="" loading="lazy">
-    </div>
+    <div class="cta-bg-img" style="display:none;"></div>
     <div class="cta-content">
       <h2 class="cta-title reveal">Ready to navigate<br><em>General Santos?</em></h2>
       <p class="cta-desc reveal">Open the app, set your route, and know your exact fare before you even board.</p>
@@ -547,9 +546,9 @@
 
     // STEP SWITCHER
     const stepImgs = [
-      'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1557499305-0af888c3d8ec?w=800&auto=format&fit=crop&q=80',
-      'https://images.unsplash.com/photo-1604357209793-fca5dca89f97?w=800&auto=format&fit=crop&q=80'
+      'step1.png',
+      'step2.png',
+      'step3.png'
     ];
     function setStep(n) {
       document.querySelectorAll('.step').forEach((s,i) => s.classList.toggle('active', i+1===n));
