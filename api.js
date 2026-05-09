@@ -1,6 +1,11 @@
 /* api.js — GeoGensan Fare Engine */
 
-const FIREBASE_DB_URL = 'https://gentrike-75c7c-default-rtdb.asia-southeast1.firebasedatabase.app';
+// NOTE: The Firebase URL is loaded from config.js (__GG_CFG__).
+// This fallback is intentionally left empty. If you see errors, ensure
+// config.js is loaded before api.js and contains a valid dbUrl.
+const FIREBASE_DB_URL = (typeof window !== 'undefined' && window.__GG_CFG__?.dbUrl)
+  ? window.__GG_CFG__.dbUrl
+  : '';
 
 // Default fare config (overridden by admin settings from Firebase)
 const DEFAULT_FARE_CONFIG = {
