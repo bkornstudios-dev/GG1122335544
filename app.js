@@ -486,8 +486,10 @@ function estimateETA(distanceKm, mode) {
 }
 
 //  FIREBASE 
-const FIREBASE_DB_URL = window.__GG_CFG__?.dbUrl || 'https://gentrike-75c7c-default-rtdb.asia-southeast1.firebasedatabase.app';
-const IMGBB_API_KEY   = window.__GG_CFG__?.imgKey || '7416acef89ebb625100b3bf7a580770a';
+// Keys are loaded from config.js (__GG_CFG__). Fallbacks are intentionally
+// empty — set real values in config.js after rotating your compromised keys.
+const FIREBASE_DB_URL = window.__GG_CFG__?.dbUrl || '';
+const IMGBB_API_KEY   = window.__GG_CFG__?.imgKey || '';
 const LAST_REPORT_KEY = 'geoGensan_lastReportTime';
 const MAX_REPORTS     = 100;
 const COOLDOWN_MS     = 2 * 60 * 60 * 1000;
@@ -548,14 +550,23 @@ async function fbDelete(path) {
   if (!res.ok) throw new Error('Firebase delete failed');
 }
 
+// Auto-cap: oldest overflow reports are archived, not permanently deleted
 async function enforceReportCap() {
   const res = await fetch(`${FIREBASE_DB_URL}/reports.json`);
   if (!res.ok) return;
   const data = await res.json();
   if (!data) return;
-  const entries = Object.entries(data).sort((a, b) => a[1].timestamp - b[1].timestamp);
+  const entries = Object.entries(data).sort((a, b) => (a[1].timestamp||0) - (b[1].timestamp||0));
   if (entries.length > MAX_REPORTS) {
-    await Promise.all(entries.slice(0, entries.length - MAX_REPORTS).map(([key]) => fbDelete(`reports/${key}`)));
+    const overflow = entries.slice(0, entries.length - MAX_REPORTS);
+    await Promise.all(overflow.map(async ([key, val]) => {
+      // Archive first, then delete
+      const archivePayload = { ...val, archivedAt: Date.now(), autoArchived: true };
+      await fetch(`${FIREBASE_DB_URL}/archivedReports/${key}.json`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(archivePayload)
+      });
+      await fbDelete(`reports/${key}`);
+    }));
   }
 }
 
