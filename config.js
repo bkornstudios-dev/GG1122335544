@@ -1,31 +1,4 @@
-/**
- * GeoGensan — Secure Configuration Loader
- *
- * ⚠️  SECURITY NOTICE — READ BEFORE DEPLOYING  ⚠️
- * ─────────────────────────────────────────────────────────────────
- * Your Firebase database was recently manipulated. This file likely
- * contributed to that breach because API keys in client-side JS are
- * ALWAYS readable by anyone who views your page source.
- *
- * IMMEDIATE ACTIONS REQUIRED:
- *  1. Go to ImgBB → API Keys → Revoke the current key → Generate a new one
- *  2. Go to Firebase Console → Realtime Database → Rules → Lock down access:
- *       {
- *         "rules": {
- *           "reports":          { ".read": false, ".write": "auth != null" },
- *           "fareConfig":       { ".read": true,  ".write": "auth != null" },
- *           "fareHistory":      { ".read": false, ".write": "auth != null" },
- *           "archivedReports":  { ".read": false, ".write": "auth != null" }
- *         }
- *       }
- *  3. Enable Firebase Authentication (Email/Password) and replace the
- *     client-side password check in admin.html with Firebase Auth sign-in.
- *  4. Move secrets to a server-side endpoint (Vercel/Netlify function).
- *  5. NEVER commit this file with real keys to version control.
- *
- * AFTER rotating your keys, paste the NEW values below.
- * ─────────────────────────────────────────────────────────────────
- */
+
 
 (function() {
   'use strict';
@@ -45,7 +18,7 @@
     // NOTE: This is client-side only — visible in source. Use Firebase Auth in production.
     adminPassword: (typeof process !== 'undefined' && process.env && process.env.ADMIN_PASSWORD)
       ? process.env.ADMIN_PASSWORD
-      : '00000000',
+      : '00011000',
   };
 
   if (typeof console !== 'undefined') {
