@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "secrets.js", "destination": "/secrets.js" }
+    { "source": "secrets", "destination": "/secrets.js" }
   ]
 }
