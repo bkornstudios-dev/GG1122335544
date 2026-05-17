@@ -6,7 +6,7 @@
   'use strict';
 
   try {
-    const res = await fetch('/api/secrets');
+    const res = await fetch('/secrets');
     if (!res.ok) throw new Error(`Config fetch failed: HTTP ${res.status}`);
     const cfg = await res.json();
 
