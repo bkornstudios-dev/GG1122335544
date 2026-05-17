@@ -30,7 +30,8 @@
     },
 
     // Admin email — set in Firebase Console → Authentication → Add user.
-
+ adminEmail: 'geostudios26@gmail.com',
+  };
 
   if (typeof console !== 'undefined') {
     if (_cfg.firebaseAuthConfig.apiKey === 'AIzaSyDsosOgn6JGhveWvm4vTuzECwRV6yDHYb8') {
