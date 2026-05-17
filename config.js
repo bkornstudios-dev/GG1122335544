@@ -3,30 +3,39 @@
 (function() {
   'use strict';
 
+  // SECURITY NOTE:
+  // - dbUrl and imgKey are low-sensitivity runtime config (Firebase DB URL is not secret by itself;
+  //   access is controlled by Firebase Security Rules).
+  // - Admin authentication is handled by Firebase Authentication — no password stored here.
+  // - NEVER add secrets (service account keys, private API keys) to this file.
+
   const _cfg = {
-    // ← Replace with your NEW Firebase DB URL after rotating in Firebase Console
+    // Firebase Realtime Database URL. Set via environment variable in production.
     dbUrl: (typeof process !== 'undefined' && process.env && process.env.FIREBASE_DB_URL)
       ? process.env.FIREBASE_DB_URL
       : 'https://gentrike-75c7c-default-rtdb.asia-southeast1.firebasedatabase.app',
 
-    // ← Replace with your NEW ImgBB API key after revoking the old one at imgbb.com
+    // ImgBB API key for photo uploads. Set via environment variable in production.
     imgKey: (typeof process !== 'undefined' && process.env && process.env.IMGBB_KEY)
       ? process.env.IMGBB_KEY
-      : '7416acef89ebb625100b3bf7a580770a',
+      : 'ed85317c7081b6e97d7eac253bd81b76',
 
-    // ← Admin panel password. Change this to something strong.
-    // NOTE: This is client-side only — visible in source. Use Firebase Auth in production.
-    adminPassword: (typeof process !== 'undefined' && process.env && process.env.ADMIN_PASSWORD)
-      ? process.env.ADMIN_PASSWORD
-      : '00011000',
+    // Firebase project config for Authentication (safe to expose — access controlled by Firebase rules).
+    // Get these from Firebase Console → Project Settings → Your apps → Web app → SDK setup.
+    firebaseAuthConfig: {
+      apiKey:            'AIzaSyDsosOgn6JGhveWvm4vTuzECwRV6yDHYb8',
+      authDomain:        'gentrike-75c7c.firebaseapp.com',
+      projectId:         'gentrike-75c7c',
+      databaseURL:       'https://gentrike-75c7c-default-rtdb.asia-southeast1.firebasedatabase.app',
+    },
+
+    // Admin email — set in Firebase Console → Authentication → Add user.
+    adminEmail: 'geostudios26@gmail.com',
   };
 
   if (typeof console !== 'undefined') {
-    if (_cfg.dbUrl.startsWith('REPLACE')) {
-      console.warn('[GeoGensan] Firebase DB URL not configured. Rotate your key first — see config.js.');
-    }
-    if (_cfg.imgKey.startsWith('REPLACE')) {
-      console.warn('[GeoGensan] ImgBB API key not configured. Rotate your key first — see config.js.');
+    if (_cfg.firebaseAuthConfig.apiKey === 'AIzaSyDsosOgn6JGhveWvm4vTuzECwRV6yDHYb8') {
+      console.warn('[GeoGensan] Firebase Auth not configured. Add your web API key to config.js → firebaseAuthConfig.');
     }
   }
 
