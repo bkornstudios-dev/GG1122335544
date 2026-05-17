@@ -617,7 +617,11 @@
    CONFIG — secrets come from /api/config (Vercel env vars), never hardcoded
 ================================================================ */
 // __GG_CFG__ is populated by config.js after fetching /api/config
-const FIREBASE_DB_URL = window.__GG_CFG__?.dbUrl || '';
+function getDbUrl() {
+  const url = window.__GG_CFG__?.dbUrl || '';
+  if (!url) console.warn('[GeoGensan] __GG_CFG__.dbUrl not ready — config.js may still be fetching.');
+  return url;
+}
 
 // Brute-force protection (Firebase Auth enforces credentials server-side)
 const MAX_LOGIN_ATTEMPTS = 5;
@@ -644,7 +648,7 @@ function showToast(msg, ms = 2600) {
 
 /*  Firebase  */
 async function fbGetAll() {
-  const url = `${FIREBASE_DB_URL}/reports.json`;
+  const url = `${getDbUrl()}/reports.json`;
   const res = await fetch(url);
   if (!res.ok) {
     const body = await res.text().catch(() => '');
@@ -655,7 +659,7 @@ async function fbGetAll() {
   return Object.entries(data).map(([k, v]) => ({ _key: k, ...v }));
 }
 async function fbDelete(key) {
-  const res = await fetch(`${FIREBASE_DB_URL}/reports/${key}.json`, { method: 'DELETE' });
+  const res = await fetch(`${getDbUrl()}/reports/${key}.json`, { method: 'DELETE' });
   if (!res.ok) {
     const body = await res.text().catch(() => '');
     throw new Error(`HTTP ${res.status}: ${body.slice(0, 80)}`);
@@ -665,7 +669,7 @@ async function fbDelete(key) {
 // Archive a report: moves it to /archivedReports/ and removes from /reports/
 async function fbArchive(key) {
   // 1. Fetch the report data
-  const getRes = await fetch(`${FIREBASE_DB_URL}/reports/${key}.json`);
+  const getRes = await fetch(`${getDbUrl()}/reports/${key}.json`);
   if (!getRes.ok) {
     const body = await getRes.text().catch(() => '');
     throw new Error(`HTTP ${getRes.status}: ${body.slice(0, 80)}`);
@@ -675,7 +679,7 @@ async function fbArchive(key) {
 
   // 2. Write to archivedReports with archivedAt timestamp
   const archivePayload = { ...data, archivedAt: Date.now(), archivedDate: new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }) };
-  const putRes = await fetch(`${FIREBASE_DB_URL}/archivedReports/${key}.json`, {
+  const putRes = await fetch(`${getDbUrl()}/archivedReports/${key}.json`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(archivePayload)
   });
   if (!putRes.ok) {
@@ -692,7 +696,7 @@ async function testFirebaseConnection() {
   const statusEl = document.getElementById('firebase-status');
   if (!statusEl) return;
   try {
-    const res = await fetch(`${FIREBASE_DB_URL}/reports.json`);
+    const res = await fetch(`${getDbUrl()}/reports.json`);
     if (res.status === 401 || res.status === 403) {
       statusEl.innerHTML = ' <strong>Firebase rules blocking reads.</strong> Go to Firebase Console → Realtime Database → Rules and set <code>".read": true</code> under <code>reports</code>.';
       statusEl.className = 'fb-status error';
@@ -1415,7 +1419,7 @@ const DEFAULT_FARE = { trike: { baseFare: 15, baseKm: 4, perKmRate: 1, discountR
 
 async function loadFareConfig() {
   try {
-    const res = await fetch(`${FIREBASE_DB_URL}/fareConfig.json`);
+    const res = await fetch(`${getDbUrl()}/fareConfig.json`);
     if (res.ok) {
       const d = await res.json();
       if (d && d.trike) return d;
@@ -1425,7 +1429,7 @@ async function loadFareConfig() {
 }
 
 async function saveFareConfig(config) {
-  const res = await fetch(`${FIREBASE_DB_URL}/fareConfig.json`, {
+  const res = await fetch(`${getDbUrl()}/fareConfig.json`, {
     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(config)
   });
   if (!res.ok) {
@@ -1438,13 +1442,13 @@ async function saveFareConfig(config) {
     date: new Date().toLocaleString('en-PH', { timeZone: 'Asia/Manila' }),
     formula: `₱${config.trike.baseFare} for ${config.trike.baseKm}km, then ₱${config.trike.perKmRate}/km. ${Math.round(config.trike.discountRate*100)}% discount. Bus ₱${config.bus.minimumFare}.`
   };
-  const histRes = await fetch(`${FIREBASE_DB_URL}/fareHistory.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(histEntry) });
+  const histRes = await fetch(`${getDbUrl()}/fareHistory.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(histEntry) });
   return res.json();
 }
 
 async function loadFareHistory() {
   try {
-    const res = await fetch(`${FIREBASE_DB_URL}/fareHistory.json`);
+    const res = await fetch(`${getDbUrl()}/fareHistory.json`);
     if (!res.ok) return [];
     const d = await res.json();
     if (!d) return [];
