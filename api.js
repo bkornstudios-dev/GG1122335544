@@ -1,11 +1,12 @@
 /* api.js — GeoGensan Fare Engine */
 
-// NOTE: The Firebase URL is loaded from config.js (__GG_CFG__).
-// This fallback is intentionally left empty. If you see errors, ensure
-// config.js is loaded before api.js and contains a valid dbUrl.
-const FIREBASE_DB_URL = (typeof window !== 'undefined' && window.__GG_CFG__?.dbUrl)
-  ? window.__GG_CFG__.dbUrl
-  : '';
+// NOTE: The Firebase URL is loaded lazily from config.js (__GG_CFG__) at call-time.
+// Reading it at module parse-time would race against the async config fetch.
+function getDbUrl() {
+  return (typeof window !== 'undefined' && window.__GG_CFG__?.dbUrl)
+    ? window.__GG_CFG__.dbUrl
+    : '';
+}
 
 // Default fare config (overridden by admin settings from Firebase)
 const DEFAULT_FARE_CONFIG = {
@@ -28,7 +29,7 @@ export async function getFareConfig() {
     return _fareConfigCache;
   }
   try {
-    const res = await fetch(`${FIREBASE_DB_URL}/fareConfig.json`);
+    const res = await fetch(`${getDbUrl()}/fareConfig.json`);
     if (res.ok) {
       const data = await res.json();
       if (data && data.trike) {
