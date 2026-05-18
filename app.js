@@ -486,10 +486,11 @@ function estimateETA(distanceKm, mode) {
 }
 
 //  FIREBASE 
-// Keys are loaded from config.js (__GG_CFG__). Fallbacks are intentionally
-// empty — set real values in config.js after rotating your compromised keys.
-const FIREBASE_DB_URL = window.__GG_CFG__?.dbUrl || '';
-const IMGBB_API_KEY   = window.__GG_CFG__?.imgKey || '';
+// Keys are loaded from config.js (__GG_CFG__). Read lazily at call-time so
+// we don't race against the async config fetch in config.js.
+// app.js is a module and executes before config.js resolves __GG_CFG__.
+function getFirebaseDbUrl() { return window.__GG_CFG__?.dbUrl || ''; }
+function getImgBBApiKey()   { return window.__GG_CFG__?.imgKey || ''; }
 const LAST_REPORT_KEY = 'geoGensan_lastReportTime';
 const MAX_REPORTS     = 100;
 const COOLDOWN_MS     = 2 * 60 * 60 * 1000;
@@ -497,7 +498,7 @@ const COOLDOWN_MS     = 2 * 60 * 60 * 1000;
 async function uploadToImgBB(base64DataUrl) {
   const base64 = base64DataUrl.split(',')[1];
   const fd = new FormData();
-  fd.append('image', base64); fd.append('key', IMGBB_API_KEY);
+  fd.append('image', base64); fd.append('key', getImgBBApiKey());
   const res = await fetch('https://api.imgbb.com/1/upload', { method: 'POST', body: fd });
   const data = await res.json();
   if (data.success) return data.data.url;
@@ -523,12 +524,14 @@ function sanitizePlate(str) {
 // ─────────────────────────────────────────────────────────────────────────────
 
 async function fbPush(path, value) {
+  const dbUrl = getFirebaseDbUrl();
+  if (!dbUrl) throw new Error('Firebase config not loaded yet — please wait and try again');
   // Security: validate path is safe
   if (!/^[a-zA-Z0-9_\-\/]+$/.test(path)) throw new Error('Invalid path');
   // Security: cap payload size
   const payloadStr = JSON.stringify(value);
   if (payloadStr.length > 50000) throw new Error('Payload too large');
-  const res = await fetch(`${FIREBASE_DB_URL}/${path}.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) });
+  const res = await fetch(`${dbUrl}/${path}.json`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(value) });
   if (!res.ok) {
     const body = await res.text().catch(() => '(no body)');
     console.error(`Firebase write failed — HTTP ${res.status}:`, body);
@@ -538,7 +541,7 @@ async function fbPush(path, value) {
 }
 
 async function fbGetAll(path) {
-  const res = await fetch(`${FIREBASE_DB_URL}/${path}.json`);
+  const res = await fetch(`${getFirebaseDbUrl()}/${path}.json`);
   if (!res.ok) throw new Error('Firebase read failed');
   const data = await res.json();
   if (!data) return [];
@@ -546,13 +549,13 @@ async function fbGetAll(path) {
 }
 
 async function fbDelete(path) {
-  const res = await fetch(`${FIREBASE_DB_URL}/${path}.json`, { method: 'DELETE' });
+  const res = await fetch(`${getFirebaseDbUrl()}/${path}.json`, { method: 'DELETE' });
   if (!res.ok) throw new Error('Firebase delete failed');
 }
 
 // Auto-cap: oldest overflow reports are archived, not permanently deleted
 async function enforceReportCap() {
-  const res = await fetch(`${FIREBASE_DB_URL}/reports.json`);
+  const res = await fetch(`${getFirebaseDbUrl()}/reports.json`);
   if (!res.ok) return;
   const data = await res.json();
   if (!data) return;
@@ -1959,7 +1962,18 @@ window.addEventListener('resize', () => { if (state.map) state.map.invalidateSiz
       showToast('Report submitted! Thank you.', 3500);
     } catch (err) {
       console.error('Report submit failed:', err);
-      showToast('Submission failed — check connection', 3500);
+      const msg = err && err.message ? err.message : String(err);
+      if (msg.includes('config not loaded')) {
+        showToast('App still loading — wait a moment and try again', 4000);
+      } else if (msg.includes('403') || msg.includes('Permission denied') || msg.includes('Unauthorized')) {
+        showToast('Firebase permission denied — check database rules', 5000);
+      } else if (msg.includes('ImgBB')) {
+        showToast('Photo upload failed — try without a photo', 4000);
+      } else if (msg.includes('Failed to fetch') || msg.includes('NetworkError')) {
+        showToast('No internet connection', 4000);
+      } else {
+        showToast(`Submission failed: ${msg.slice(0, 60)}`, 5000);
+      }
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = 'Submit Report';
