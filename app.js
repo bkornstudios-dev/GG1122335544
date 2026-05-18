@@ -718,6 +718,8 @@ function startLiveLocation() {
     (err) => { showToast('Could not get live location'); console.error(err); },
     { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
   );
+  // Routes are now in live mode — update alt-route tooltips to drop "tap to select"
+  refreshAltRouteTooltips();
 }
 
 // Switch routes visually without changing the fare
@@ -739,7 +741,7 @@ function selectAlternativeRouteNoFareChange(index, lockedFareData) {
       const layer = L.polyline(coords, { color: '#3b82f6', weight: 4, opacity: 0.9, dashArray: '12, 10', pane: 'altRoutePane' }).addTo(state.map);
       layer.on('click', () => selectAlternativeRoute(i));
       glowLayer.on('click', () => selectAlternativeRoute(i));
-      layer.bindTooltip(`Alternative Route — ${(route.distance / 1000).toFixed(1)} km (tap to select)`, { sticky: true });
+      layer.bindTooltip(altRouteTooltipLabel(i + 1, route.distance / 1000), { sticky: true });
       state.trike.altRouteLayers.push(glowLayer, layer);
     }
   });
@@ -765,6 +767,8 @@ function stopLiveLocation() {
   if (state.liveMarker) { state.liveMarker.remove(); state.liveMarker = null; }
   const btn = document.getElementById('use-location');
   if (btn) btn.classList.remove('live-active');
+  // Back to manual mode — restore "tap to select" on alt routes
+  refreshAltRouteTooltips();
   showToast('Live location stopped');
 }
 
@@ -799,6 +803,35 @@ function handleMapClick(e) {
 }
 
 //  TRIKE ROUTE (multi-route) 
+// Returns the tooltip text for an alternative route line.
+// When live location is active, routes switch automatically — no "tap" needed.
+function altRouteTooltipLabel(routeIdx, distKm) {
+  const liveActive = !!state.liveLocationWatchId;
+  const dist = `${distKm.toFixed(1)} km`;
+  return liveActive
+    ? `Route ${routeIdx} — ${dist} (auto-switching by location)`
+    : `Route ${routeIdx} — ${dist} (tap to select)`;
+}
+
+// Call after toggling live location to refresh tooltips on already-drawn alt lines.
+// Alt layers are stored in pairs [glowLayer, visibleLayer, glowLayer, visibleLayer, …]
+// The visible layer (odd index in each pair) has the tooltip.
+function refreshAltRouteTooltips() {
+  const routes = state.trike.routes;
+  if (!routes.length) return;
+  // altRouteLayers are pushed as [glow, line] pairs per alt route
+  let pairIdx = 0;
+  for (let i = 0; i < state.trike.altRouteLayers.length; i += 2) {
+    const layer = state.trike.altRouteLayers[i + 1]; // the visible line
+    if (!layer) continue;
+    const routeArrayIdx = pairIdx + 1; // alt routes start at index 1
+    const distKm = routes[routeArrayIdx] ? routes[routeArrayIdx].distance / 1000 : 0;
+    layer.unbindTooltip();
+    layer.bindTooltip(altRouteTooltipLabel(routeArrayIdx + 1, distKm), { sticky: true });
+    pairIdx++;
+  }
+}
+
 function clearTrikeRoutes() {
   if (state.trike.primaryRouteLayer) { state.trike.primaryRouteLayer.remove(); state.trike.primaryRouteLayer = null; }
   state.trike.altRouteLayers.forEach(l => l.remove());
@@ -869,7 +902,7 @@ async function updateTrikeRoute() {
       }).addTo(state.map);
       layer.on('click', () => selectAlternativeRoute(idx + 1));
       glowLayer.on('click', () => selectAlternativeRoute(idx + 1));
-      layer.bindTooltip(`Route ${idx + 2} — ${(route.distance / 1000).toFixed(1)} km (tap to select)`, { sticky: true });
+      layer.bindTooltip(altRouteTooltipLabel(idx + 2, route.distance / 1000), { sticky: true });
       state.trike.altRouteLayers.push(glowLayer, layer);
     });
 
@@ -938,7 +971,7 @@ function selectAlternativeRoute(index) {
       const layer = L.polyline(coords, { color: '#3b82f6', weight: 4, opacity: 0.9, dashArray: '12, 10', pane: 'altRoutePane' }).addTo(state.map);
       layer.on('click', () => selectAlternativeRoute(i));
       glowLayer.on('click', () => selectAlternativeRoute(i));
-      layer.bindTooltip(`Route ${i + 1} — ${(route.distance / 1000).toFixed(1)} km (tap to select)`, { sticky: true });
+      layer.bindTooltip(altRouteTooltipLabel(i + 1, route.distance / 1000), { sticky: true });
       state.trike.altRouteLayers.push(glowLayer, layer);
     }
   });
