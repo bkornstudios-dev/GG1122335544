@@ -16,6 +16,7 @@ const state = {
     altRouteLayers: [],
     activeRouteIndex: 0,
     routes: [],   // raw OSRM route objects
+    _isRerouting: false,  // prevents overlapping reroute calls
   },
   busjeep: {
     routeControl: null,
@@ -681,9 +682,8 @@ function startLiveLocation() {
           // Only trigger route calculation if B already exists
           if (state.trike.endMarker) updateTrikeRoute().then(fd => { _lockedFareData = fd; });
           state.map.setView(latlng, 15);
-        } else if (state.trike.routes.length > 1) {
-          // Auto-switch to whichever route the user is physically closest to
-          // Throttle: only check every 5 seconds
+        } else if (state.trike.routes.length > 0) {
+          // Throttle checks to every 5 seconds
           const now = Date.now();
           if (now - _lastAutoSwitchTime < 5000) return;
           _lastAutoSwitchTime = now;
@@ -698,14 +698,36 @@ function startLiveLocation() {
             if (d < closestDist) { closestDist = d; closestIdx = i; }
           });
 
-          // Switch if user is closer to a different route (threshold: 80m for snap, 300m for off-route warning)
           if (closestIdx !== currentIdx && closestDist < 80) {
-            // User is clearly on the alternative route — switch display but KEEP original fare
+            // On a different pre-fetched alt route — switch visually, keep fare
             selectAlternativeRouteNoFareChange(closestIdx, _lockedFareData);
-            showToast(` Auto-switched to Route ${closestIdx + 1} (fare unchanged)`, 3000);
-          } else if (closestDist > 300) {
-            // User appears to be off all known routes
-            showToast('You appear to be off the plotted route', 2500);
+            showToast(`Auto-switched to Route ${closestIdx + 1} (fare unchanged)`, 3000);
+
+          } else if (closestDist > 300 && !state.trike._isRerouting) {
+            // User is off ALL known routes — reroute from current GPS position to B
+            state.trike._isRerouting = true;
+            showToast('Off route — recalculating…', 3000);
+
+            // Move the A marker to current GPS position so the new route starts here
+            if (state.trike.startMarker) {
+              state.trike.startMarker.setLatLng(latlng);
+            } else {
+              state.trike.startMarker = L.marker(latlng, {
+                draggable: false,
+                icon: createMarkerIcon('A', '#10b981')
+              }).addTo(state.map);
+            }
+
+            updateTrikeRoute().then(fd => {
+              _lockedFareData = fd;
+              state.trike._isRerouting = false;
+              showToast('Route updated from your location', 3000);
+            }).catch(() => {
+              state.trike._isRerouting = false;
+              showToast('Could not reroute — will retry', 2500);
+              // Reset throttle so it retries sooner on next GPS fix
+              _lastAutoSwitchTime = Date.now() - 3000;
+            });
           }
         }
       }
@@ -838,6 +860,7 @@ function clearTrikeRoutes() {
   state.trike.altRouteLayers = [];
   state.trike.routes = [];
   state.trike.activeRouteIndex = 0;
+  state.trike._isRerouting = false;
 }
 
 async function updateTrikeRoute() {
