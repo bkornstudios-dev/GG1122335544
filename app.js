@@ -703,26 +703,34 @@ function startLiveLocation() {
             selectAlternativeRouteNoFareChange(closestIdx, _lockedFareData);
             showToast(`Auto-switched to Route ${closestIdx + 1} (fare unchanged)`, 3000);
 
-          } else if (closestDist > 300 && !state.trike._isRerouting) {
+          } else if (closestDist > 50 && !state.trike._isRerouting) {
             // User is off ALL known routes — reroute from current GPS position to B
             state.trike._isRerouting = true;
             showToast('Off route — recalculating…', 3000);
 
-            // Move the A marker to current GPS position so the new route starts here
-            if (state.trike.startMarker) {
-              state.trike.startMarker.setLatLng(latlng);
-            } else {
-              state.trike.startMarker = L.marker(latlng, {
+            // Keep A marker at the original live-location start point (don't move it)
+            // Only update the startMarker position used for routing, not the displayed marker
+            const rerouteFrom = latlng;
+            if (!state.trike.startMarker) {
+              state.trike.startMarker = L.marker(state.trike._liveStartLatLng || latlng, {
                 draggable: false,
                 icon: createMarkerIcon('A', '#10b981')
               }).addTo(state.map);
             }
 
+            // Temporarily override the marker position for routing only, then restore
+            const originalLatLng = state.trike.startMarker.getLatLng();
+            state.trike.startMarker.setLatLng(rerouteFrom);
+
             updateTrikeRoute().then(fd => {
+              // Restore A marker to the original live-start position
+              if (state.trike.startMarker) state.trike.startMarker.setLatLng(originalLatLng);
               _lockedFareData = fd;
               state.trike._isRerouting = false;
               showToast('Route updated from your location', 3000);
             }).catch(() => {
+              // Also restore on failure
+              if (state.trike.startMarker) state.trike.startMarker.setLatLng(originalLatLng);
               state.trike._isRerouting = false;
               showToast('Could not reroute — will retry', 2500);
               // Reset throttle so it retries sooner on next GPS fix
