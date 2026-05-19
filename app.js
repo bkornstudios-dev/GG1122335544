@@ -628,7 +628,7 @@ function startLiveLocation() {
 
   // Get a fast first fix immediately to set point A without waiting for watchPosition
   navigator.geolocation.getCurrentPosition(
-    (pos) => {
+    async (pos) => {
       if (_liveOriginLocked) return; // watchPosition already fired first
       const latlng = L.latLng(pos.coords.latitude, pos.coords.longitude);
       _liveOriginLocked = true;
@@ -646,6 +646,13 @@ function startLiveLocation() {
       }
       state.trike._startManuallySet = true;
       state.map.setView(latlng, 15);
+      // Write reverse-geocoded address to the start-display field
+      const startEl = document.getElementById('start-display');
+      if (startEl) {
+        const addr = await reverseGeocode(latlng);
+        startEl.textContent = addr;
+        startEl.classList.remove('is-placeholder');
+      }
       showToast('Live location set as start point');
       if (state.trike.endMarker) updateTrikeRoute().then(fd => { _lockedFareData = fd; });
     },
@@ -678,6 +685,11 @@ function startLiveLocation() {
             state.trike.startMarker.setLatLng(latlng);
           }
           state.trike._startManuallySet = true;
+          // Write reverse-geocoded address to the start-display field
+          reverseGeocode(latlng).then(addr => {
+            const startEl = document.getElementById('start-display');
+            if (startEl) { startEl.textContent = addr; startEl.classList.remove('is-placeholder'); }
+          });
           showToast('Live location set as start point');
           // Only trigger route calculation if B already exists
           if (state.trike.endMarker) updateTrikeRoute().then(fd => { _lockedFareData = fd; });
