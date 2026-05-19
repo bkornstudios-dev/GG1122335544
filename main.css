@@ -81,6 +81,16 @@ body.dark-mode {
   --shadow-xl: 0 20px 25px rgba(255, 255, 255, 0.15);
 }
 
+/* ── Text selection: orange in dark mode ── */
+::selection {
+  background: rgba(230, 126, 34, 0.25);
+  color: inherit;
+}
+body.dark-mode ::selection {
+  background: var(--primary);
+  color: #ffffff;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -928,6 +938,11 @@ body.dark-mode .toggle-icon {
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -1px;
+  color: #ffffff;
+}
+
+body.dark-mode .fare-amount {
+  color: #ffffff !important;
 }
 
 .fare-breakdown {
@@ -2838,6 +2853,7 @@ body.dark-mode .lfc-hist-name-input { color: var(--gray-900); }
   .ltp-close {
     width: 40px;
     height: 40px;
+    border-radius: 50%;
     font-size: 18px;
     font-weight: 900;
     border: 2px solid var(--gray-300);
