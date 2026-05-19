@@ -145,8 +145,6 @@
     .stat-value { font-family: var(--mono); font-size: 26px; font-weight: 700; line-height: 1; }
     .stat-overcharging .stat-value { color: #c2410c; }
     .stat-reckless     .stat-value { color: #b91c1c; }
-    .stat-refusal      .stat-value { color: #7c3aed; }
-    .stat-verbal       .stat-value { color: #be123c; }
     .stat-unsafe       .stat-value { color: #a16207; }
     .stat-other        .stat-value { color: #15803d; }
 
@@ -260,8 +258,6 @@
     .type-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700; white-space: nowrap; }
     .type-badge.overcharging { background: #fff7ed; color: #c2410c; }
     .type-badge.reckless     { background: #fef2f2; color: #b91c1c; }
-    .type-badge.refusal      { background: #f5f3ff; color: #7c3aed; }
-    .type-badge.verbal       { background: #fff1f2; color: #be123c; }
     .type-badge.unsafe       { background: #fefce8; color: #a16207; }
     .type-badge.other        { background: #f0fdf4; color: #15803d; }
     .type-badge.default      { background: #f1f5f9; color: #475569; }
@@ -533,8 +529,6 @@
               <option value="">All Types</option>
               <option value="Overcharging">Overcharging</option>
               <option value="Reckless Driving">Reckless Driving</option>
-              <option value="Refusal of Service">Refusal of Service</option>
-              <option value="Verbal Abuse">Verbal Abuse</option>
               <option value="Unsafe Vehicle">Unsafe Vehicle</option>
               <option value="Other">Other</option>
             </select>
@@ -717,12 +711,10 @@ async function testFirebaseConnection() {
 /*  Type maps  */
 const TYPE_CLS = {
   'Overcharging':'overcharging','Reckless Driving':'reckless',
-  'Refusal of Service':'refusal','Verbal Abuse':'verbal',
   'Unsafe Vehicle':'unsafe','Other':'other'
 };
 const TYPE_STAT_CLS = {
   'Overcharging':'stat-overcharging','Reckless Driving':'stat-reckless',
-  'Refusal of Service':'stat-refusal','Verbal Abuse':'stat-verbal',
   'Unsafe Vehicle':'stat-unsafe','Other':'stat-other'
 };
 
